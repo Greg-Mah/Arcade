@@ -25,11 +25,19 @@ function resetGame(state,height,width,player1,player2)
         state.board.push([]);
         for(let o=0;o<width;o++)
         {
-            state.board[i].push(2);
+            state.board[i].push(-1);
         }
     }
     state.players=[];
-    state.players.push({name:player1,type:player})
+    if(player1==="")
+    {
+        player1="Computer";
+        state.players.push({name:player1,type:computer})
+    }
+    else
+    {
+        state.players.push({name:player1,type:player})
+    }
     if(player2==="")
     {
         player2="Computer";
@@ -131,19 +139,19 @@ function winCheck(state,row,col)//check whenever you place a piece
         {
             if(!(horizontal===0&&(vertical===0||vertical===-1)))//only check in valid directions
             {
-                if(horizontal===0)
+                if(horizontal===0)//line has to be vertical if no horizontal
                 {
                     verticalLine+=lineCheck(state,row,col,horizontal,vertical);
                 }
-                else if(vertical===0)
+                else if(vertical===0)//line has to be horizontal if no vertical
                 {
                     horizontalLine+=lineCheck(state,row,col,horizontal,vertical);
                 }
-                else if(horizontal*vertical===1)
+                else if(horizontal*vertical===1)//line is diagonal up if vertical and horizontal match direction
                 {
                     diagonalUpLine+=lineCheck(state,row,col,horizontal,vertical);
                 }
-                else
+                else//line is diagonal down if vertical and horizontal are diffrent signs
                 {
                     diagonalDownLine+=lineCheck(state,row,col,horizontal,vertical);
                 }
@@ -173,7 +181,7 @@ function winCheck(state,row,col)//check whenever you place a piece
 function tieCheck(state)
 {
     let col=0;
-    while(col<state.width&&state.board[0][col]!==2)
+    while(col<state.width&&state.board[0][col]!==-1)
     {
         col++;
     }
@@ -188,6 +196,10 @@ function tieCheck(state)
 }
 function lineCheck(state,row,col,horizontal,vertical)
 {
+    if(horizontal===0&&vertical===0)//if we dont shift anywhere just return 0
+    {
+        return 0;
+    }
     let length=0;
     let currentRow=row;
     let currentCol=col;
@@ -209,7 +221,7 @@ function lineCheck(state,row,col,horizontal,vertical)
 function pieceDrop(state,col)
 {
     let row=0;
-    while(row<state.height&&state.board[row][col]===2)//go until non empty space found
+    while(row<state.height&&state.board[row][col]===-1)//go until non empty space found
     {
         row++;
     }
@@ -219,7 +231,7 @@ function pieceDrop(state,col)
 
 function turnChange(state)
 {
-    state.currentTurn=(state.currentTurn+1)%2;
+    state.currentTurn=(state.currentTurn+1)%state.players.length;
 }
 
 //BootStrapping
