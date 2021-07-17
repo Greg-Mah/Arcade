@@ -1,13 +1,18 @@
 //State
 const player=0;
 const computer=1;
+const defaultHeight=6;
+const defaultWidth=7;
+const defaultWinNumber=4;
+
 
 
 const gameState=
 {
-    height:6,
-    width:7,
+    height:defaultHeight,
+    width:defaultWidth,
     board:[],
+    winNumber:defaultWinNumber,
     players:[],
     currentTurn:0
 };
@@ -15,10 +20,26 @@ const gameState=
 
 
 
-function resetGame(state,height,width,player1,player2)
+function resetGame(state,height,width,winNumber,player1,player2)
 {
     state.height=height;
+    if(state.height<=0)
+    {
+        state.height=defaultHeight;
+    }
+    
     state.width=width;
+    if(state.width<=0)
+    {
+        state.width=defaultWidth;
+    }
+
+    state.winNumber=winNumber;
+    if(state.winNumber<=0&&(state.winNumber<state.height||state.winNumber<state.width))
+    {
+        state.winNumber=defaultWinNumber;
+    }
+    
     state.board=[];
     for(let i=0;i<height;i++)
     {
@@ -29,7 +50,7 @@ function resetGame(state,height,width,player1,player2)
         }
     }
     state.players=[];
-    if(player1==="")
+    if(player1===undefined)
     {
         player1="Computer";
         state.players.push({name:player1,type:computer})
@@ -38,7 +59,7 @@ function resetGame(state,height,width,player1,player2)
     {
         state.players.push({name:player1,type:player})
     }
-    if(player2==="")
+    if(player2===undefined)
     {
         player2="Computer";
         state.players.push({name:player2,type:computer})
@@ -49,19 +70,40 @@ function resetGame(state,height,width,player1,player2)
     }
     state.currentTurn=getRandomInt(0,1);
  
+    console.log(state);
+    changeBoard(state);
 }
 
 //DOM Selectors
 const boardElement=document.getElementById("gameBoard");
+const player1InputElement=document.getElementById("player1Input");
+const player2InputElement=document.getElementById("player2Input");
+const heightInputElement=document.getElementById("heightInput");
+const widthInputElement=document.getElementById("widthInput");
+const winNumberInputElement=document.getElementById("winNumberInput");
+const startGameButtonElement=document.getElementById("startGameButton");
 
 
-
-//boardElement.style.backgroundColor="#FF0000";
 
 //DOM Manupulation Functions
 function renderAll(state)
 {
     renderBoard(state);
+}
+
+function changeBoard(state)
+{
+    let htmlString="";
+    for(let i=0;i<state.height;i++)
+    {
+        htmlString+="<tr>";
+        for(let o=0;o<state.width;o++)
+        {
+            htmlString+="<td></td>";
+        }
+        htmlString+="</tr>";
+    }
+    boardElement.innerHTML=htmlString;
 }
 
 function renderBoard(state)
@@ -84,6 +126,10 @@ function renderBoard(state)
 }
 
 //Event Listeners
+startGameButtonElement.addEventListener("click",function(clickEvent)
+{
+   resetGame(gameState,heightInputElement.value,widthInputElement.value,winNumberInputElement.value,player1InputElement.value,player2InputElement.value); 
+});
 boardElement.addEventListener("click",function(clickEvent)
 {
     if(clickEvent.target.nodeName==="TD")
@@ -235,7 +281,7 @@ function turnChange(state)
 }
 
 //BootStrapping
-resetGame(gameState,6,7,"me")
+resetGame(gameState,defaultHeight,defaultWidth,defaultWinNumber,"player1")
 
 //DebugTesting
 const testBoard1=

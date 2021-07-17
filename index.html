@@ -11,7 +11,7 @@
 <body>
     <main>
         <h1>Connect 4 Game</h1>
-        <p>Enter player names. Leave blank for computer player</p>
+        <p>Enter player names. Leave blank for a computer player</p>
         <div>
             <h2>Player 1:</h2>
             <input id="player1Input" type="text">
@@ -21,7 +21,7 @@
             <h2>Player 2:</h2>
             <input id="player2Input" type="text">
         </div>
-        <p>Enter the game board dimensions and the number to win. Will use default if left blank.</p>
+        <p>Enter the game board dimensions and the number to win. Leave blank for default.</p>
         <div>
             <h2>Height:</h2>
             <input id="heightInput" type="number" value="6">
@@ -35,7 +35,12 @@
             <input id="winNumberInput" type="number" value="4">
         </div>
 
+        <button id="startGameButton">Start Game</button>
 
+        <p id=player1Score></p>
+        <p id=player2Score></p>
+
+        <p id="messageBoard"></p>
         
         <table>
             <tbody id="gameBoard">
