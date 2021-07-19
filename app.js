@@ -1,4 +1,4 @@
-//State
+//variable declration
 const player=0;
 const computer=1;
 const defaultHeight=6;
@@ -7,6 +7,8 @@ const defaultWinNumber=4;
 
 
 
+
+//State
 const gameState=
 {
     height:defaultHeight,
@@ -14,7 +16,8 @@ const gameState=
     board:[],
     winNumber:defaultWinNumber,
     players:[],
-    currentTurn:0
+    currentTurn:0,
+    phase:0
 };
 
 
@@ -22,56 +25,68 @@ const gameState=
 
 function resetGame(state,height,width,winNumber,player1,player2)
 {
-    state.height=height;
-    if(state.height<=0)
+
+    if(Number(height)<=0)
     {
         state.height=defaultHeight;
     }
+    else
+    {
+        state.height=height;
+    }   
     
-    state.width=width;
-    if(state.width<=0)
+    if(Number(width)<=0)
     {
         state.width=defaultWidth;
     }
+    else
+    {
+        state.width=width;
+    }    
 
-    state.winNumber=winNumber;
-    if(state.winNumber<=0&&(state.winNumber<state.height||state.winNumber<state.width))
+    
+    if(Number(winNumber)<=0&&(state.winNumber<state.height||state.winNumber<state.width))
     {
         state.winNumber=defaultWinNumber;
     }
+    else
+    {
+        state.winNumber=winNumber;
+    }
+    
     
     state.board=[];
-    for(let i=0;i<height;i++)
+    for(let i=0;i<state.height;i++)
     {
         state.board.push([]);
-        for(let o=0;o<width;o++)
+        for(let o=0;o<state.width;o++)
         {
             state.board[i].push(-1);
         }
     }
     state.players=[];
-    if(player1===undefined)
+    if(!player1)
     {
-        player1="Computer";
-        state.players.push({name:player1,type:computer})
+        state.players.push({name:"Computer",type:computer});
     }
     else
     {
-        state.players.push({name:player1,type:player})
+        state.players.push({name:player1,type:player});
     }
-    if(player2===undefined)
+    if(!player2)
     {
-        player2="Computer";
-        state.players.push({name:player2,type:computer})
+        state.players.push({name:"Computer",type:computer});
     }
     else
     {
-        state.players.push({name:player2,type:player})
+        state.players.push({name:player2,type:player});
     }
-    state.currentTurn=getRandomInt(0,1);
+    state.currentTurn=getRandomInt(0,2);
+    state.phase=0;
  
-    console.log(state);
     changeBoard(state);
+    gameTick(state,0,0);
+    computerTurns(gameState);
 }
 
 //DOM Selectors
@@ -82,13 +97,15 @@ const heightInputElement=document.getElementById("heightInput");
 const widthInputElement=document.getElementById("widthInput");
 const winNumberInputElement=document.getElementById("winNumberInput");
 const startGameButtonElement=document.getElementById("startGameButton");
+const messageBoardElement=document.getElementById("messageBoard");
 
 
 
 //DOM Manupulation Functions
-function renderAll(state)
+function renderAll(state,message)
 {
     renderBoard(state);
+    renderMessage(state,message);
 }
 
 function changeBoard(state)
@@ -104,6 +121,13 @@ function changeBoard(state)
         htmlString+="</tr>";
     }
     boardElement.innerHTML=htmlString;
+}
+
+function renderMessage(state,message)
+{
+    messageBoardElement.innerHTML=state.players[0].name+
+    " vs. "+state.players[1].name+"<br> It is "+
+    state.players[state.currentTurn].name+"'s turn.<br>"+message;
 }
 
 function renderBoard(state)
@@ -126,13 +150,13 @@ function renderBoard(state)
 }
 
 //Event Listeners
-startGameButtonElement.addEventListener("click",function(clickEvent)
+startGameButtonElement.addEventListener("click",function()
 {
    resetGame(gameState,heightInputElement.value,widthInputElement.value,winNumberInputElement.value,player1InputElement.value,player2InputElement.value); 
 });
 boardElement.addEventListener("click",function(clickEvent)
 {
-    if(clickEvent.target.nodeName==="TD")
+    if(gameState.phase===0&&gameState.players[gameState.currentTurn].type===0&&clickEvent.target.nodeName==="TD")
     {
         const childrenArray=clickEvent.target.parentElement.children;
         let col=0;
@@ -146,19 +170,16 @@ boardElement.addEventListener("click",function(clickEvent)
         }
         else
         {
-            const row =pieceDrop(gameState,col);
+            const row=pieceDrop(gameState,col);
             if(row>=0)
             {
-                gameState.board[row][col]=gameState.currentTurn;
-                
-                console.log(winCheck(gameState,row,col));
-                tieCheck(gameState)
-                turnChange(gameState);
-                renderAll(gameState);
+                gameState.board[row][col]=gameState.currentTurn;  
+                gameTick(gameState,row,col);
+                computerTurns(gameState);
             }
             else
             {
-                console.log("please choose a column with an empty space");
+                renderAll(gameState,"please choose a column with an empty space");
             }
         }
     }
@@ -175,6 +196,10 @@ function getRandomInt(min,max)
 //
 function winCheck(state,row,col)//check whenever you place a piece
 {
+    if(row<0)//if invalid row then return -1
+    {
+        return -1;
+    }
     let diagonalUpLine=1;//diagonal bottom left to top right,
     let diagonalDownLine=1; //diagonal bottom right to top left,
     let horizontalLine=1;// horizontal left to right
@@ -264,6 +289,57 @@ function lineCheck(state,row,col,horizontal,vertical)
     return length;
 }
 
+function computerTurns(state)//take computer turns until it is a player's turn or game is over
+{
+    while(state.phase===0&&state.players[state.currentTurn].type===computer)
+    {
+        const col=computerChoice(state);
+        const row=pieceDrop(state,col);
+        state.board[row][col]=state.currentTurn;
+        gameTick(state,row,col);
+    }
+}
+
+function computerChoice(state)//returns column for computer to put piece into
+{
+    if(state.players[state.currentTurn]===0)//if a player calls this function just return
+    {
+        return;
+    }
+    let weights=//initalize to one spot to compare with others
+    [
+        {
+            value:winCheck(state,pieceDrop(state,0),0),
+            index:0
+        }
+    ];
+    for(let i=1;i<state.width;i++)
+    {
+        const eval=winCheck(state,pieceDrop(state,i),i);
+        if(eval>weights[0].value)//if we find a higher value only select from those
+        {
+            weights=   
+            [
+                {
+                    value:eval,
+                    index:i
+                }
+            ];
+        }
+        else if(eval===weights[0].value)//if we find a equal value add to list of valid moves
+        {
+            weights.push
+            (
+                {
+                    value:eval,
+                    index:i
+                }
+            );
+        }
+    }
+    return weights[getRandomInt(0,weights.length)].index;//return column chosen to drop piece
+}
+
 function pieceDrop(state,col)
 {
     let row=0;
@@ -280,45 +356,26 @@ function turnChange(state)
     state.currentTurn=(state.currentTurn+1)%state.players.length;
 }
 
+function gameTick(state,row,col)
+{
+    if(winCheck(state,row,col)>=state.winNumber)
+    {
+        state.phase=1;
+        renderAll(state,state.players[state.currentTurn].name+" wins!");
+    }
+    else if(tieCheck(state))
+    {
+        state.phase=1;
+        renderAll(state,"Its a Tie! there is no more spaces to play.");
+    }
+    else
+    {
+        turnChange(state);
+        renderAll(state,"");
+    }
+    
+}
 //BootStrapping
-resetGame(gameState,defaultHeight,defaultWidth,defaultWinNumber,"player1")
+resetGame(gameState,defaultHeight,defaultWidth,defaultWinNumber,"Player 1")
 
 //DebugTesting
-const testBoard1=
-[
-    [0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0],
-    [0,0,0,1,1,1,1],
-];
-const testBoard2=
-[
-    [0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0],
-    [0,0,0,1,0,0,0],
-    [0,0,0,0,1,0,0],
-    [0,0,0,0,0,1,0],
-    [0,0,0,0,0,0,1],
-];
-const testBoard3=
-[
-    [0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0],
-    [0,0,0,1,0,0,0],
-    [0,0,0,1,0,0,0],
-    [0,0,0,1,0,0,0],
-    [0,0,0,1,0,0,0],
-];
-const testBoard4=
-[
-    [0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,1],
-    [0,0,0,0,0,1,0],
-    [0,0,0,0,1,0,0],
-    [0,0,0,1,0,0,0],
-];
-
-console.log(boardElement);
