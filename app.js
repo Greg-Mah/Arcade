@@ -179,7 +179,7 @@ boardElement.addEventListener("click",function(clickEvent)
             }
             else
             {
-                renderAll(gameState,"please choose a column with an empty space");
+                renderAll(gameState,"Please choose a column with an empty space");
             }
         }
     }
@@ -371,7 +371,7 @@ function gameTick(state,row,col)
     else
     {
         turnChange(state);
-        renderAll(state,"");
+        renderAll(state,"_____________");
     }
     
 }
